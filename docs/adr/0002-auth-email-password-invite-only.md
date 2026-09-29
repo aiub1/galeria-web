@@ -49,6 +49,38 @@ from someone who already has an account.
   `lib/auth/actions.ts` and called out again in the PR that introduces this
   ADR.
 
+## Hardening
+
+- **`safeNext()` also rejects control characters and literal spaces**
+  (`/[\u0000-\u001F\u007F\s]/`). A value like `/\t/evil.com` passes every
+  other check (starts with `/`, no `//`, no backslash, no `:`), but a
+  browser strips the tab when normalizing the URL before navigating,
+  turning it into `//evil.com` — which it then reads as
+  `https://evil.com/`. Same failure mode for `\n` and `\r`. Percent-encoded
+  sequences like `%09` are not affected: they're three printable
+  characters (`%`, `0`, `9`), not an actual tab, and a browser doesn't
+  collapse them the same way — so `safeNext` still accepts them as a
+  literal (if unusual) internal path. The dangerous case is specifically
+  the *decoded* value, which is exactly what `searchParams.next` on the
+  login page already is by the time it reaches `safeNext` — covered by a
+  test that round-trips a percent-encoded tab through `URLSearchParams`
+  the way Next.js's router does.
+- **`/nova-senha` requires a live recovery session**, same as `/convite`:
+  it calls `getUser()` server-side before rendering the form and redirects
+  to `/login?erro=link-invalido` if there's no session. Without this, the
+  page would render the form for anyone, and `setNewPassword`'s
+  `updateUser` call would just fail with an unhelpful generic error
+  instead of sending the person back to request a fresh link.
+- **Baseline security headers** in `next.config.ts`, applied to every
+  route: `X-Frame-Options: DENY` and `Content-Security-Policy:
+  frame-ancestors 'none'` (belt-and-suspenders against clickjacking —
+  photos of children are the kind of content this app most needs to keep
+  out of an invisible iframe), `X-Content-Type-Options: nosniff`, and
+  `Referrer-Policy: strict-origin-when-cross-origin`. The CSP only sets
+  `frame-ancestors` for now; a full policy (`script-src`, `img-src`
+  scoped to the R2 domain, etc.) is deferred to phase 3, once photo
+  upload/display exists and there's something real to scope `img-src` to.
+
 ## Consequences
 
 - Password minimum length (8 characters) is enforced both client-side and
