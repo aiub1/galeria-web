@@ -117,15 +117,22 @@ body {
   text-wrap: pretty;
 }
 
-a {
-  color: var(--text-link);
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-  transition: color var(--dur-fast) var(--ease-standard);
-}
+/*
+ * Link padrão do mockup (sublinhado de 1px). Em `@layer base` para que os
+ * utilitários do Tailwind (cor, borda) vençam: fora de camada, estas regras
+ * sobrescreviam `text-*`/`border-*` em qualquer <a> (Button href, cards, abas).
+ */
+@layer base {
+  a {
+    color: var(--text-link);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    transition: color var(--dur-fast) var(--ease-standard);
+  }
 
-a:hover {
-  color: var(--text-link-hover);
+  a:hover {
+    color: var(--text-link-hover);
+  }
 }
 
 *,
