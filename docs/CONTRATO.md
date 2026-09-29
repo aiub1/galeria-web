@@ -3,13 +3,12 @@
 Versão 1.1 · **Este arquivo é idêntico nos dois repositórios.**
 Alterou aqui, copie para o outro no mesmo PR.
 
-> ⚠️ O **galeria-web ainda não existe**. Até ele ser criado, este documento vive
-> apenas no core e a regra de cópia acima fica suspensa. Ao criar o outro
-> repositório, a primeira tarefa é copiar este arquivo na íntegra e reativar a
-> obrigação.
-
 > **Mudanças da 1.0 para a 1.1** — perfil provisionado nasce inativo e a web
 > precisa tratar esse estado; geração de tipos dormente; duas invariantes novas.
+
+> **Mudanças da 1.1 para a 1.2** — `galeria-web` criado; a regra de cópia
+> idêntica no cabeçalho volta a valer. A geração de tipos (§2) deixa de estar
+> dormente: `lib/database.types.ts` já existe no `galeria-web`.
 
 ---
 
@@ -43,10 +42,10 @@ npx supabase gen types typescript --local \
 O arquivo é commitado no galeria-web. PR que muda schema sem regenerar os tipos
 não passa no CI da web.
 
-**Dormente até o galeria-web existir.** Nenhum PR do core pode ser bloqueado por
-um passo que não tem onde escrever. Ao criar o outro repositório, gerar os tipos
-cobrindo todas as migrations acumuladas e só então ligar a checagem no CI. Ver
-`docs/adr/0002-migration-conventions.md`.
+**Não é mais dormente.** `galeria-web` existe e `lib/database.types.ts` já foi
+gerado cobrindo todas as migrations acumuladas até aqui (ADR
+[0001](adr/0001-web-stack.md) deste repositório). Ver também
+`docs/adr/0002-migration-conventions.md` no core.
 
 ---
 
