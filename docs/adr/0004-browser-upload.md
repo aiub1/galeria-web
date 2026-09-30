@@ -130,9 +130,19 @@ rotation, then the image is redrawn on a canvas and encoded with
 GPS, camera model and date are **not** copied to the output. As a guard, every
 generated file is inspected (`lib/upload/webp.ts`) and the upload is blocked if a
 RIFF `EXIF` or `XMP ` chunk shows up. `blob.type` is checked: a browser that
-cannot encode WebP returns PNG, and the screen then blocks the upload with a
-message suggesting Chrome, Edge or Firefox. There is no WASM encoder: it would
-need `'wasm-unsafe-eval'` in the CSP.
+cannot encode WebP returns PNG. The first version blocked the upload there with a
+message suggesting Chrome, Edge or Firefox, but WebKit (Safari and **every**
+browser on iOS) always lands in that case, so an iPhone could not upload.
+
+Amendment (2026-09-30): when the native canvas does not produce WebP, the app
+falls back to libwebp compiled to WASM (`@jsquash/webp`, loaded lazily, so browsers
+with native WebP never download it). The input is raw `ImageData`, so no metadata
+can come along, and the EXIF/XMP guard still runs on the output. The cost is
+`'wasm-unsafe-eval'` in `script-src`, granted **only on `/enviar`**
+(`buildCsp({ allowWasm })`, set by `proxy.ts`); it allows compiling WASM, not
+`eval` of strings. The block-with-a-message path remains for when even the WASM
+encoder fails. iOS Safari caps a canvas at ~16.7 MP, so photos above that (e.g. the
+48 MP mode) still fail there with an error on the item.
 
 `taken_at` is read from the **original** file before re-encoding, with the raw
 EXIF strings (`reviveValues: false`): a `Date` revived by the reader would be

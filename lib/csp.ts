@@ -14,16 +14,22 @@ export type CspInput = {
   isDev: boolean;
   supabaseUrl: string;
   r2ObjectHost: string;
+  /**
+   * Só a tela de upload: o encoder WebP em WASM (navegadores sem WebP no
+   * canvas, como o WebKit do iPhone) precisa de `'wasm-unsafe-eval'`. Ele só
+   * libera compilar WASM, não `eval` de texto. As demais rotas não o recebem.
+   */
+  allowWasm?: boolean;
 };
 
-export function buildCsp({ nonce, isDev, supabaseUrl, r2ObjectHost }: CspInput): string {
+export function buildCsp({ nonce, isDev, supabaseUrl, r2ObjectHost, allowWasm = false }: CspInput): string {
   const supabase = new URL(supabaseUrl);
   const supabaseWs = `${supabase.protocol === "https:" ? "wss:" : "ws:"}//${supabase.host}`;
 
   const directives = [
     `default-src 'self'`,
     // React usa eval em desenvolvimento (stacks de erro); em produção não.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${allowWasm ? " 'wasm-unsafe-eval'" : ""}${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     `style-src-attr 'unsafe-inline'`,
     `img-src 'self' data: blob: https://${r2ObjectHost}`,

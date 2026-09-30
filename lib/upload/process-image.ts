@@ -18,6 +18,7 @@ import {
 } from "./limits";
 import { parseTakenAt } from "./taken-at";
 import { isWebp, webpHasMetadata } from "./webp";
+import { encodeWebpWasm } from "./webp-wasm";
 
 export class ImageProcessError extends Error {}
 /** O navegador não sabe gerar WebP (canvas devolveu outro formato). */
@@ -71,10 +72,25 @@ export function yieldToMain(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+// Preenchido por `canEncodeWebp()`: false = o canvas deste navegador não gera
+// WebP (WebKit) e vamos direto ao encoder WASM, sem gastar um PNG inteiro.
+let nativeWebp: boolean | undefined;
+
 async function encodeWebp(canvas: AnyCanvas, quality: number): Promise<Blob> {
-  const blob = await toBlob(canvas, UPLOAD_CONTENT_TYPE, quality);
-  // Alguns navegadores devolvem PNG quando não sabem gerar WebP.
-  if (!blob || blob.type !== UPLOAD_CONTENT_TYPE) throw new WebpUnsupportedError();
+  let blob: Blob | null = null;
+  if (nativeWebp !== false) {
+    blob = await toBlob(canvas, UPLOAD_CONTENT_TYPE, quality);
+    // Alguns navegadores devolvem PNG quando não sabem gerar WebP.
+    if (blob && blob.type !== UPLOAD_CONTENT_TYPE) blob = null;
+  }
+  if (!blob) {
+    try {
+      const { width, height } = canvas;
+      blob = await encodeWebpWasm(context(canvas).getImageData(0, 0, width, height), quality);
+    } catch {
+      throw new WebpUnsupportedError();
+    }
+  }
   const bytes = new Uint8Array(await blob.arrayBuffer());
   if (!isWebp(bytes)) throw new WebpUnsupportedError();
   if (webpHasMetadata(bytes)) {
@@ -181,14 +197,25 @@ export async function makePreviewUrl(file: File, side = 160): Promise<string | n
   }
 }
 
-/** O navegador gera WebP de verdade? Testado com um canvas 1×1. */
+/**
+ * Dá para gerar WebP aqui? Primeiro o canvas nativo (1×1); se ele devolver
+ * outro formato (WebKit), tenta o encoder WASM.
+ */
 export async function canEncodeWebp(): Promise<boolean> {
   try {
     const canvas = makeCanvas(1, 1);
     context(canvas).fillRect(0, 0, 1, 1);
     const blob = await toBlob(canvas, UPLOAD_CONTENT_TYPE, 0.8);
     release(canvas);
-    return blob?.type === UPLOAD_CONTENT_TYPE;
+    nativeWebp = blob?.type === UPLOAD_CONTENT_TYPE;
+  } catch {
+    nativeWebp = false;
+  }
+  if (nativeWebp) return true;
+
+  try {
+    const wasm = await encodeWebpWasm(new ImageData(1, 1), 0.8);
+    return isWebp(new Uint8Array(await wasm.arrayBuffer()));
   } catch {
     return false;
   }

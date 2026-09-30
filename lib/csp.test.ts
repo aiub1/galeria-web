@@ -19,6 +19,13 @@ describe("buildCsp", () => {
     expect(directive("script-src")).not.toContain("unsafe-eval");
   });
 
+  it("wasm-unsafe-eval só quando pedido (tela de upload), sem liberar unsafe-eval", () => {
+    expect(directive("script-src")).not.toContain("wasm-unsafe-eval");
+    const withWasm = buildCsp({ ...base, allowWasm: true });
+    expect(withWasm).toContain("script-src 'self' 'nonce-abc123' 'strict-dynamic' 'wasm-unsafe-eval';");
+    expect(withWasm).not.toMatch(/'unsafe-eval'/);
+  });
+
   it("unsafe-eval só em desenvolvimento", () => {
     expect(directive("script-src")).not.toContain("unsafe-eval");
     expect(buildCsp({ ...base, isDev: true })).toContain("'unsafe-eval'");
