@@ -4,6 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { serverEnv } from "@/lib/env.server";
 import { MAX_VARIANT_BYTES, UPLOAD_CONTENT_TYPE, UPLOAD_URL_EXPIRES_SECONDS, UPLOAD_VARIANTS, type UploadVariant } from "@/lib/upload/limits";
 import type { PhotoKeys } from "@/lib/upload/keys";
+import type { SignedUpload } from "@/lib/upload/types";
 import { getR2Client } from "./client";
 
 /*
@@ -25,11 +26,6 @@ import { getR2Client } from "./client";
 
 export type PhotoSizes = Record<UploadVariant, number>;
 
-export type SignedUpload = {
-  url: string;
-  /** Cabeçalhos que o navegador deve mandar (Content-Length é automático). */
-  contentType: typeof UPLOAD_CONTENT_TYPE;
-};
 
 export class UploadLimitError extends Error {}
 

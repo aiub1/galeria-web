@@ -3,6 +3,7 @@
 import { requireActiveProfile } from "@/lib/auth/require-active-profile";
 import { createClient } from "@/lib/supabase/server";
 import * as service from "@/lib/upload/service";
+import type { ConfirmResult, CreateResult, PrepareResult } from "@/lib/upload/types";
 
 // Server Actions são endpoints POST públicos: nada aqui confia na página que
 // as chamou. Cada uma exige sessão + perfil ativo, monta o contexto com o JWT
@@ -14,18 +15,18 @@ async function context(): Promise<service.UploadContext> {
   return { supabase: await createClient(), userId, role: profile.role };
 }
 
-export async function prepareUpload(input: unknown): Promise<service.PrepareResult> {
+export async function prepareUpload(input: unknown): Promise<PrepareResult> {
   return service.prepareUpload(await context(), input);
 }
 
-export async function confirmUpload(input: unknown): Promise<service.ConfirmResult> {
+export async function confirmUpload(input: unknown): Promise<ConfirmResult> {
   return service.confirmUpload(await context(), input);
 }
 
-export async function createEvent(input: unknown): Promise<service.CreateResult> {
+export async function createEvent(input: unknown): Promise<CreateResult> {
   return service.createEvent(await context(), input);
 }
 
-export async function createSession(input: unknown): Promise<service.CreateResult> {
+export async function createSession(input: unknown): Promise<CreateResult> {
   return service.createSession(await context(), input);
 }

@@ -270,3 +270,19 @@ describe("createEvent / createSession", () => {
     expect(dupSession).toEqual({ ok: false, error: "Já existe uma sessão com esse nome neste evento." });
   });
 });
+
+describe("confirmUpload — crianças marcadas", () => {
+  const MINOR = "77777777-7777-4777-8777-777777777777";
+
+  it("uploader não marca crianças, e nada é inserido", async () => {
+    const r = await confirmUpload(ctx("uploader"), { ...confirmBody, containsMinors: true, minorIds: [MINOR] });
+    expect(r.ok).toBe(false);
+    expect(db.inserted).toEqual([]);
+  });
+
+  it("nem o admin marca crianças em foto sem menores", async () => {
+    const r = await confirmUpload(ctx("admin"), { ...confirmBody, containsMinors: false, minorIds: [MINOR] });
+    expect(r.ok).toBe(false);
+    expect(db.inserted).toEqual([]);
+  });
+});

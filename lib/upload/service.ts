@@ -4,9 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { canUpload, type UserRole } from "@/lib/auth/roles";
 import type { Database } from "@/lib/database.types";
 import { enqueueIndexFaces } from "@/lib/jobs/enqueue-index-faces";
-import { signPhotoUploads, UploadLimitError, verifyUploadedObjects, type SignedUpload } from "@/lib/r2/sign-upload";
+import { signPhotoUploads, UploadLimitError, verifyUploadedObjects } from "@/lib/r2/sign-upload";
 import { photoKeys } from "./keys";
-import type { UploadVariant } from "./limits";
 import {
   confirmUploadSchema,
   createEventSchema,
@@ -14,6 +13,7 @@ import {
   prepareUploadSchema,
 } from "./schemas";
 import { eventSlug } from "./slug";
+import type { ConfirmResult, CreateResult, Failure, PrepareResult } from "./types";
 
 /*
  * Lógica das Server Actions de upload (app/(app)/enviar/actions.ts). As actions
@@ -29,7 +29,6 @@ export type UploadContext = {
   role: UserRole;
 };
 
-type Failure = { ok: false; error: string };
 const fail = (error: string): Failure => ({ ok: false, error });
 
 const FORBIDDEN = "Seu perfil não pode enviar fotos.";
@@ -61,14 +60,6 @@ async function checkEventAndSession(
   return null;
 }
 
-export type PreparedPhoto = {
-  clientId: string;
-  photoId: string;
-  uploads: Record<UploadVariant, SignedUpload>;
-};
-
-export type PrepareResult = { ok: true; photos: PreparedPhoto[] } | Failure;
-
 export async function prepareUpload(ctx: UploadContext, raw: unknown): Promise<PrepareResult> {
   if (!canUpload(ctx.role)) return fail(FORBIDDEN);
   const parsed = prepareUploadSchema.safeParse(raw);
@@ -98,15 +89,6 @@ export async function prepareUpload(ctx: UploadContext, raw: unknown): Promise<P
   }
 }
 
-export type ConfirmResult =
-  | {
-      ok: true;
-      status: "pending" | "skipped";
-      /** queued: job criado · not_applicable: com menores, sem indexação · failed: publicada, job não criado */
-      indexing: "queued" | "not_applicable" | "failed";
-    }
-  | Failure;
-
 async function findOwnPhoto(ctx: UploadContext, photoId: string) {
   const { data, error } = await ctx.supabase
     .from("photos")
@@ -125,6 +107,10 @@ export async function confirmUpload(ctx: UploadContext, raw: unknown): Promise<C
 
   const problem = await checkEventAndSession(ctx, input.eventId, input.sessionId);
   if (problem) return fail(problem);
+
+  if (input.minorIds.length > 0 && (ctx.role !== "admin" || !input.containsMinors)) {
+    return fail("Só a administração pode marcar crianças, e só em fotos com menores.");
+  }
 
   let existing = await findOwnPhoto(ctx, input.photoId);
 
@@ -167,6 +153,18 @@ export async function confirmUpload(ctx: UploadContext, raw: unknown): Promise<C
     return fail("Não foi possível publicar esta foto.");
   }
 
+  if (input.minorIds.length > 0) {
+    // photo_minors: policy "tag minors" (can_upload + tagged_by = eu). Repetível.
+    const { error } = await ctx.supabase.from("photo_minors").upsert(
+      input.minorIds.map((minorId) => ({ photo_id: existing.id, minor_id: minorId, tagged_by: ctx.userId })),
+      { onConflict: "photo_id,minor_id", ignoreDuplicates: true },
+    );
+    if (error) {
+      console.error("confirmUpload: falha ao marcar crianças", { photoId: existing.id, code: error.code });
+      return fail("A foto foi publicada, mas não foi possível vincular as crianças. Tente de novo.");
+    }
+  }
+
   const status = existing.status === "skipped" ? "skipped" : "pending";
   if (existing.contains_minors !== false) return { ok: true, status, indexing: "not_applicable" };
 
@@ -178,9 +176,6 @@ export async function confirmUpload(ctx: UploadContext, raw: unknown): Promise<C
     return { ok: true, status, indexing: "failed" };
   }
 }
-
-export type CreatedRef = { id: string; name: string; slug?: string; eventDate?: string };
-export type CreateResult = { ok: true; item: CreatedRef } | Failure;
 
 export async function createEvent(ctx: UploadContext, raw: unknown): Promise<CreateResult> {
   if (!canUpload(ctx.role)) return fail(FORBIDDEN);

@@ -28,6 +28,9 @@ export const confirmUploadSchema = z.object({
   // (CONTRATO §8, invariante 2). Não existe valor padrão.
   containsMinors: z.boolean(),
   isPrivate: z.boolean(),
+  // Crianças do cadastro marcadas na foto. Só admin (quem lê `minors`) e só
+  // com containsMinors=true; o serviço confere.
+  minorIds: z.array(z.guid()).max(20).default([]),
   width: z.number().int().min(1).max(16383),
   height: z.number().int().min(1).max(16383),
   takenAt: z.iso.datetime().nullable(),
