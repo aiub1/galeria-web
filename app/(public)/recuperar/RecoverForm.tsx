@@ -16,7 +16,7 @@ export function RecoverForm() {
   }, null);
 
   if (submitted) {
-    return <p className="text-body text-text-body">{SUCCESS_MESSAGE}</p>;
+    return <p className="text-body-md text-text-body">{SUCCESS_MESSAGE}</p>;
   }
 
   return (

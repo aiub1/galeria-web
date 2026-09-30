@@ -30,7 +30,7 @@ export default async function LoginPage({
           <h1 className="m-0 max-w-[14ch] font-display text-display-2 uppercase text-paper-1">
             A memória da nossa casa
           </h1>
-          <p className="mt-[24px] max-w-[46ch] text-body text-[#E8E6E3]">
+          <p className="mt-[24px] max-w-[46ch] text-body-md text-[#E8E6E3]">
             Acesso só para membros convidados. Fotos com crianças e adolescentes ficam fora da busca e
             visíveis apenas para os responsáveis cadastrados.
           </p>

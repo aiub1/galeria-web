@@ -78,8 +78,8 @@
   --text-h4--line-height: var(--lh-heading);
   --text-body-lg: var(--text-body-lg);
   --text-body-lg--line-height: var(--lh-body);
-  --text-body: var(--text-body);
-  --text-body--line-height: var(--lh-body);
+  --text-body-md: var(--text-body-md);
+  --text-body-md--line-height: var(--lh-body);
   --text-body-sm: var(--text-body-sm);
   --text-body-sm--line-height: var(--lh-body);
   --text-micro: var(--text-micro);
@@ -111,7 +111,7 @@ body {
   background: var(--surface-page);
   color: var(--text-body);
   font-family: var(--font-ui);
-  font-size: var(--text-body);
+  font-size: var(--text-body-md);
   line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   text-wrap: pretty;

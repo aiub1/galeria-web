@@ -38,6 +38,14 @@ code could land.
   those variables — never duplicating a hex value in the theme config, so
   the token file stays the only place a designer-facing color lives.
 
+  **Divergence from the design system (2026-09-30).** The mockup declares
+  `--text-body` twice, as a colour and as a 16px size; the later declaration
+  won, so the colour was dead and `text-text-body` produced nothing. The
+  mockup uses the name as a colour 43 times and as a size 3 times, so the
+  name stays with the colour and the size is renamed `--text-body-md`
+  (Tailwind: `text-body-md`). The rename is documented in `tokens.css` and
+  must be re-applied whenever the tokens are re-extracted from the mockup.
+
 - **`@supabase/ssr`**, with a browser client (`lib/supabase/client.ts`) and
   a server client (`lib/supabase/server.ts`) built on Next's `cookies()`.
   `proxy.ts` — Next.js 16 renamed `middleware.ts` to `proxy.ts`; see the

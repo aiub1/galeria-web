@@ -14,7 +14,7 @@ export function SemAcesso() {
         <h1 className="m-0 font-display text-display-3 uppercase text-text-strong">
           Esta área não está disponível para você
         </h1>
-        <p className="m-0 max-w-[54ch] text-body text-text-body">
+        <p className="m-0 max-w-[54ch] text-body-md text-text-body">
           Sua conta não tem acesso a esta tela. Se você acha que isso é um engano, fale com um
           administrador.
         </p>

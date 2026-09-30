@@ -43,7 +43,7 @@ export default async function EventoPage({ params, searchParams }: PageProps<"/e
           </div>
           <h1 className="m-0 font-display text-display-3 uppercase text-text-strong">{event.name}</h1>
           {event.description && (
-            <p className="mt-[12px] max-w-[62ch] text-body text-ink-2">{event.description}</p>
+            <p className="mt-[12px] max-w-[62ch] text-body-md text-ink-2">{event.description}</p>
           )}
         </div>
         {/* Só a contagem visível: o front não sabe (e não deve revelar) quantas
