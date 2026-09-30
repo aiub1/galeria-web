@@ -104,3 +104,15 @@ jobs:
             echo "$hits"
             exit 1
           fi
+      - name: cliente service_role só é importado por lib/jobs/enqueue-index-faces.ts
+        run: |
+          hits="$(grep -rlE "from ['\"]@/lib/supabase/admin['\"]|from ['\"](\.{1,2}/)+(lib/)?supabase/admin['\"]|from ['\"]\./admin['\"]" \
+            --include='*.ts' --include='*.tsx' . \
+            --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git \
+            | grep -v -E '\.test\.tsx?$' \
+            | grep -v -E '^\./lib/jobs/enqueue-index-faces\.ts$' || true)"
+          if [ -n "$hits" ]; then
+            echo "::error::lib/supabase/admin importado fora de lib/jobs/enqueue-index-faces.ts:"
+            echo "$hits"
+            exit 1
+          fi

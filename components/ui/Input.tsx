@@ -19,7 +19,7 @@ export function Input({ label, hint, invalid, name, className = "", ...rest }: P
         id={id}
         name={name}
         className={
-          "w-full rounded-none border-0 bg-paper-1 px-[14px] py-[13px] font-ui text-body text-text-body outline-none transition-[var(--transition-control)] " +
+          "w-full rounded-none border-0 bg-paper-1 px-[14px] py-[13px] font-ui text-body-md text-text-body outline-none transition-[var(--transition-control)] " +
           (invalid
             ? "shadow-[inset_0_0_0_1px_var(--red-3)]"
             : "shadow-[inset_0_0_0_1px_var(--paper-4)] focus:shadow-[inset_0_0_0_2px_var(--clay-3)]")

@@ -21,7 +21,7 @@ export function PendingScreen({ createdAt }: { createdAt: string }) {
         <h1 className="m-0 font-display text-display-3 uppercase text-text-strong">
           Conta aguardando liberação
         </h1>
-        <p className="m-0 max-w-[52ch] text-body text-text-body">
+        <p className="m-0 max-w-[52ch] text-body-md text-text-body">
           Sua conta foi criada, mas ainda precisa ser liberada por um administrador da igreja. Enquanto
           isso, o acervo fica indisponível — nada é ocultado por erro seu.
         </p>

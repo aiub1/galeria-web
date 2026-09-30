@@ -1,9 +1,9 @@
 import "server-only";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Tables } from "@/lib/database.types";
 import { serverEnv } from "@/lib/env.server";
-import { r2Endpoint } from "./host";
+import { getR2Client } from "./client";
 
 /*
  * URLs assinadas de leitura do R2 (bucket privado).
@@ -26,10 +26,10 @@ export type PhotoVariant = "thumb" | "web";
 export type SignablePhoto = Pick<Tables<"photos">, "id" | "thumb_key" | "web_key">;
 export type SignableEvent = Pick<Tables<"events">, "id" | "cover_key">;
 
-const EXPIRES_IN_SECONDS = 15 * 60;
+const EXPIRES_IN_SECONDS = 30 * 60;
 // A mesma foto gera a mesma URL dentro de uma janela fixa, para o navegador
 // reaproveitar o cache. Ver ADR 0003: a validade efetiva de uma URL fica entre
-// 5 e 15 minutos, conforme o ponto da janela em que foi emitida.
+// 20 e 30 minutos, conforme o ponto da janela em que foi emitida.
 const SIGNING_WINDOW_MS = 10 * 60 * 1000;
 
 /** Início do bloco de 10 min que contém `now`. */
@@ -37,23 +37,9 @@ export function signingWindowStart(now: number): Date {
   return new Date(Math.floor(now / SIGNING_WINDOW_MS) * SIGNING_WINDOW_MS);
 }
 
-let client: S3Client | null = null;
-
-function getClient(): S3Client {
-  client ??= new S3Client({
-    region: "auto",
-    endpoint: r2Endpoint(serverEnv.R2_ACCOUNT_ID),
-    credentials: {
-      accessKeyId: serverEnv.R2_ACCESS_KEY_ID,
-      secretAccessKey: serverEnv.R2_SECRET_ACCESS_KEY,
-    },
-  });
-  return client;
-}
-
 async function signKey(key: string, signingDate: Date): Promise<string> {
   return getSignedUrl(
-    getClient(),
+    getR2Client(),
     new GetObjectCommand({
       Bucket: serverEnv.R2_BUCKET,
       Key: key,

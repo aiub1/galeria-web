@@ -13,15 +13,19 @@ describe("buildCsp", () => {
   const directive = (name: string) => csp.split("; ").find((d) => d.startsWith(`${name} `));
 
   it("script-src usa nonce e nunca unsafe-inline", () => {
-    expect(directive("script-src")).toBe("script-src 'self' 'nonce-abc123' 'strict-dynamic'");
+    expect(directive("script-src")).toBe("script-src 'self' 'nonce-abc123' 'strict-dynamic' 'wasm-unsafe-eval'");
     expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
     expect(directive("script-src")).not.toContain("unsafe-inline");
-    expect(directive("script-src")).not.toContain("unsafe-eval");
+  });
+
+  it("wasm-unsafe-eval vale para todas as rotas (navegação client-side não troca a CSP), sem liberar unsafe-eval", () => {
+    expect(directive("script-src")).toContain("'wasm-unsafe-eval'");
+    expect(csp).not.toMatch(/'unsafe-eval'/);
   });
 
   it("unsafe-eval só em desenvolvimento", () => {
-    expect(directive("script-src")).not.toContain("unsafe-eval");
-    expect(buildCsp({ ...base, isDev: true })).toContain("'unsafe-eval'");
+    expect(directive("script-src")).not.toMatch(/'unsafe-eval'/);
+    expect(buildCsp({ ...base, isDev: true })).toMatch(/'unsafe-eval'/);
   });
 
   it("style-src usa nonce em produção e unsafe-inline só em desenvolvimento", () => {
@@ -35,13 +39,15 @@ describe("buildCsp", () => {
     expect(directive("img-src")).toBe("img-src 'self' data: blob: https://bucket.acct.r2.cloudflarestorage.com");
   });
 
-  it("connect-src cobre Supabase (https e wss)", () => {
-    expect(directive("connect-src")).toBe("connect-src 'self' https://proj.supabase.co wss://proj.supabase.co");
+  it("connect-src cobre Supabase (https e wss) e o mesmo host exato do bucket (PUT do upload)", () => {
+    expect(directive("connect-src")).toBe(
+      "connect-src 'self' https://proj.supabase.co wss://proj.supabase.co https://bucket.acct.r2.cloudflarestorage.com",
+    );
   });
 
   it("Supabase local em http usa ws", () => {
     const local = buildCsp({ ...base, supabaseUrl: "http://127.0.0.1:54321" });
-    expect(local).toContain("connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321");
+    expect(local).toContain("connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321 https://bucket.acct");
   });
 
   it("fecha o resto", () => {

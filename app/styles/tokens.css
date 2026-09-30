@@ -1,7 +1,15 @@
 /*
- * Design tokens — copied verbatim from docs/design/extracted/tokens.source.css
+ * Design tokens — copied from docs/design/extracted/tokens.source.css
  * (extracted from docs/design/mockups.html by scripts/extract-mockup.mjs).
  * Do not hand-edit values here; regenerate from the mockup and re-copy.
+ *
+ * DIVERGENCE FROM THE DESIGN SYSTEM (ADR 0001): the mockup defines
+ * `--text-body` twice — as a colour (alias, ink-2) and as a size (16px). The
+ * second declaration wins, so the colour was dead. The mockup uses the name
+ * as a colour 43 times (`color:var(--text-body)`) and as a size 3 times
+ * (`font-size:var(--text-body)`, which resolves to nothing there). Here the
+ * name stays with the colour and the size is renamed `--text-body-md`. After
+ * regenerating from the mockup, re-apply this rename.
  */
 
 :root {
@@ -86,7 +94,7 @@
   --text-h3: 20px;
   --text-h4: 17px;
   --text-body-lg: 19px;
-  --text-body: 16px;
+  --text-body-md: 16px;
   --text-body-sm: 14px;
   --text-micro: 12px;
   --text-scripture-lg: 26px;

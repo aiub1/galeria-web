@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
+// Só desenvolvimento: hosts extras (ex.: o IP da rede, para abrir o `next dev`
+// no celular) que podem acessar /_next/*. Sem isso o Next bloqueia esses
+// recursos e a página chega sem JS. Lista separada por vírgula.
+const devOrigins = (process.env.DEV_ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: devOrigins,
   async headers() {
     return [
       {

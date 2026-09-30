@@ -20,8 +20,7 @@ const variants: Record<Variant, string> = {
   primary: "bg-clay-3 text-text-on-accent hover:bg-clay-4 active:bg-clay-5",
   solid: "bg-ink-1 text-paper-1 hover:bg-ink-3 active:bg-ink-2",
   outline:
-    "bg-transparent text-text-strong outline outline-[length:var(--border-w-strong)] " +
-    "outline-offset-[calc(-1*var(--border-w-strong))] outline-border-strong " +
+    "bg-transparent text-text-strong shadow-[inset_0_0_0_var(--border-w-strong)_var(--border-strong)] " +
     "hover:bg-ink-1 hover:text-paper-1 active:bg-ink-2 active:text-paper-1",
   ghost: "bg-transparent text-text-strong hover:bg-paper-3 active:bg-paper-4",
   inverse: "bg-paper-1 text-ink-1 hover:bg-paper-3 active:bg-paper-4",
