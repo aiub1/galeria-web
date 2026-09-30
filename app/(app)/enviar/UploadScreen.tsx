@@ -35,6 +35,14 @@ function reducer(items: UploadItem[], action: Action): UploadItem[] {
   }
 }
 
+// crypto.randomUUID só existe em contexto seguro (https ou localhost); em http
+// pelo IP da rede (celular no servidor de dev) ele é undefined. O id é só uma
+// chave de lista no navegador, então getRandomValues (sempre disponível) basta.
+function newItemId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const panel = "mb-[24px] border border-border-hairline bg-surface-card p-[24px]";
 
 export function UploadScreen({
@@ -102,7 +110,7 @@ export function UploadScreen({
         continue;
       }
       accepted.push({
-        id: crypto.randomUUID(),
+        id: newItemId(),
         file,
         previewUrl: null,
         // Sem valor padrão: o usuário precisa responder cada foto.
