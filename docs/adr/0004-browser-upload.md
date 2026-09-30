@@ -138,9 +138,21 @@ Amendment (2026-09-30): when the native canvas does not produce WebP, the app
 falls back to libwebp compiled to WASM (`@jsquash/webp`, loaded lazily, so browsers
 with native WebP never download it). The input is raw `ImageData`, so no metadata
 can come along, and the EXIF/XMP guard still runs on the output. The cost is
-`'wasm-unsafe-eval'` in `script-src`, granted **only on `/enviar`**
-(`buildCsp({ allowWasm })`, set by `proxy.ts`); it allows compiling WASM, not
-`eval` of strings. The block-with-a-message path remains for when even the WASM
+`'wasm-unsafe-eval'` in `script-src`. It allows compiling WASM, not `eval` of
+strings; production still has no `'unsafe-eval'`.
+
+**Why the grant is global, not only on `/enviar`.** The first version added it
+only when the request path was `/enviar`. But the CSP that applies is the one of
+the *document*, and a `next/link` navigation (the menu) does not load a new
+document: an iPhone coming from `/eventos` through the menu kept the CSP of
+`/eventos`, so the WASM was blocked and the screen fell back to the WebP error.
+Only a hard load of `/enviar` worked. Serving a different CSP per route cannot be
+made to work with client-side navigation, so `'wasm-unsafe-eval'` is now in every
+route's `script-src` (`lib/csp.ts`, no option). The exposure is small: no page
+outside the upload screen loads WASM, and the directive does not enable
+`eval`/`Function`. Verified on a production build by opening `/eventos` and
+navigating through the menu to `/enviar` with the native encoder disabled.
+The block-with-a-message path remains for when even the WASM
 encoder fails. iOS Safari caps a canvas at ~16.7 MP, so photos above that (e.g. the
 48 MP mode) still fail there with an error on the item.
 
@@ -193,10 +205,14 @@ the photo.
   fails, the photo stays `pending` with no job. The screen shows it as
   "publicada, indexação pendente" and the server logs it. The phase-6 admin screen
   needs a "requeue" action (the same `enqueueIndexFaces`, which is idempotent).
-- **Duplicate jobs under a race.** The "no duplicate job" check is a read followed
-  by an insert; two simultaneous `confirmUpload` calls for the same photo could
-  both insert. The core could add a partial unique index on
-  `(payload->>'photo_id') where type = 'index_faces'`.
+- **Duplicate jobs under a race.** `TODO(core)`: the "no duplicate job" check in
+  `enqueueIndexFaces` is a read followed by an insert, so it is **not atomic**: two
+  simultaneous `confirmUpload` calls for the same photo can both pass the read and
+  both insert. The definitive protection is in the database, a partial unique
+  index on `jobs`:
+  `create unique index jobs_index_faces_photo_key on jobs ((payload->>'photo_id')) where type = 'index_faces';`
+  With it, the second insert fails with `23505` and the web can treat that as
+  "already queued". Until then the check only narrows the window.
 - **Uploader cannot read `minors`** (fact 3): no children tagging for them until
   the core offers a way (e.g. a function returning only the names of the children
   of a given event). `TODO(core)`.
