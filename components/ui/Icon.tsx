@@ -25,6 +25,13 @@ const PATHS = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  "upload-cloud": (
+    <>
+      <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+      <path d="M12 12v9" />
+      <path d="m16 16-4-4-4 4" />
+    </>
+  ),
   "chevron-left": <path d="m15 18-6-6 6-6" />,
   "chevron-right": <path d="m9 18 6-6-6-6" />,
 } as const;
