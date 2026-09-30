@@ -26,10 +26,10 @@ export type PhotoVariant = "thumb" | "web";
 export type SignablePhoto = Pick<Tables<"photos">, "id" | "thumb_key" | "web_key">;
 export type SignableEvent = Pick<Tables<"events">, "id" | "cover_key">;
 
-const EXPIRES_IN_SECONDS = 15 * 60;
+const EXPIRES_IN_SECONDS = 30 * 60;
 // A mesma foto gera a mesma URL dentro de uma janela fixa, para o navegador
 // reaproveitar o cache. Ver ADR 0003: a validade efetiva de uma URL fica entre
-// 5 e 15 minutos, conforme o ponto da janela em que foi emitida.
+// 20 e 30 minutos, conforme o ponto da janela em que foi emitida.
 const SIGNING_WINDOW_MS = 10 * 60 * 1000;
 
 /** Início do bloco de 10 min que contém `now`. */

@@ -46,7 +46,7 @@ describe("signPhotoUrls", () => {
     const url = new URL((await signPhotoUrls([photo("p1")], "thumb")).get("p1")!);
     expect(url.protocol).toBe("https:");
     expect(url.host).toBe(r2ObjectHost("acct123", "galeria"));
-    expect(url.searchParams.get("X-Amz-Expires")).toBe("900");
+    expect(url.searchParams.get("X-Amz-Expires")).toBe("1800");
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("host");
   });
 

@@ -52,7 +52,7 @@ always be saved by the browser.
 
 ### 3. Signing window for browser caching
 
-URLs are valid for 15 minutes (`X-Amz-Expires=900`). A fresh `Date.now()` in
+URLs are valid for 30 minutes (`X-Amz-Expires=1800`). A fresh `Date.now()` in
 every signature would give every page render a different URL for the same
 photo and defeat the browser cache. Instead the `signingDate` is rounded down
 to the start of the current 10-minute block, so the same photo yields the
@@ -60,12 +60,13 @@ same URL for the whole block. The responses also carry
 `response-cache-control=private, max-age=600` (part of the signed query, so
 it is stable inside the window too).
 
-Consequence worth knowing: the 15 minutes count from the block start, so the
-**effective** remaining validity of a URL is between 5 and 15 minutes. Every
-page is rendered per request, so a reload re-signs; a tab left open for more
-than ~5–15 minutes may show broken images for lazy-loaded tiles until
-reloaded. If that turns out to hurt, raise `EXPIRES_IN_SECONDS` to 25 minutes
-(guaranteeing ≥15 remaining) — a one-constant change.
+Consequence worth knowing: the 30 minutes count from the block start, so
+the **effective** remaining validity of a URL is between 20 and 30 minutes.
+Every page is rendered per request, so a reload re-signs. Originally the
+validity was 15 minutes (5–15 effective); it was raised in phase 4 so that
+`lazy` images loaded by someone scrolling slowly through a long gallery
+still find a valid URL. The 10-minute signing window is unchanged, so cache
+reuse is unchanged.
 
 ### 4. No Vercel image optimizer
 
