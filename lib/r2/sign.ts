@@ -1,9 +1,9 @@
 import "server-only";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Tables } from "@/lib/database.types";
 import { serverEnv } from "@/lib/env.server";
-import { r2Endpoint } from "./host";
+import { getR2Client } from "./client";
 
 /*
  * URLs assinadas de leitura do R2 (bucket privado).
@@ -37,23 +37,9 @@ export function signingWindowStart(now: number): Date {
   return new Date(Math.floor(now / SIGNING_WINDOW_MS) * SIGNING_WINDOW_MS);
 }
 
-let client: S3Client | null = null;
-
-function getClient(): S3Client {
-  client ??= new S3Client({
-    region: "auto",
-    endpoint: r2Endpoint(serverEnv.R2_ACCOUNT_ID),
-    credentials: {
-      accessKeyId: serverEnv.R2_ACCESS_KEY_ID,
-      secretAccessKey: serverEnv.R2_SECRET_ACCESS_KEY,
-    },
-  });
-  return client;
-}
-
 async function signKey(key: string, signingDate: Date): Promise<string> {
   return getSignedUrl(
-    getClient(),
+    getR2Client(),
     new GetObjectCommand({
       Bucket: serverEnv.R2_BUCKET,
       Key: key,
