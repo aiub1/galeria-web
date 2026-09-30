@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Bebas_Neue, Spectral } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
 
 // Variable names are the font-specific loader output, not the design tokens
@@ -32,7 +33,13 @@ export const metadata: Metadata = {
   description: "Galeria interna de fotos da igreja Poiema CWB.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // A CSP usa um nonce por requisição (proxy.ts). O Next só injeta o nonce em
+  // páginas renderizadas por requisição — página estática ficaria sem nonce e
+  // seus scripts seriam bloqueados. Como o app é fechado e toda tela depende
+  // de sessão, nada aqui perde por ser dinâmico.
+  await connection();
+
   return (
     <html
       lang="pt-BR"

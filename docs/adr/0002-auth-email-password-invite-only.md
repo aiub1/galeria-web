@@ -80,6 +80,8 @@ from someone who already has an account.
   `frame-ancestors` for now; a full policy (`script-src`, `img-src`
   scoped to the R2 domain, etc.) is deferred to phase 3, once photo
   upload/display exists and there's something real to scope `img-src` to.
+  **Superseded by [ADR 0003](0003-r2-signed-reads.md):** the full policy,
+  with a per-request nonce, now lives in `proxy.ts`.
 
 ## Consequences
 
