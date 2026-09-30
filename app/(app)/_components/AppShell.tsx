@@ -28,7 +28,7 @@ export function AppShell({
       <header className="sticky top-0 z-40 border-b border-border-hairline bg-white/92 backdrop-blur-[10px]">
         <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-[20px] px-[20px]">
           <Link href="/eventos" className="flex flex-none items-center gap-[14px] no-underline">
-            <Image src="/brand/poiema-cwb.png" alt="Poiema CWB" width={90} height={30} className="h-[30px] w-auto" />
+            <Image src="/brand/poiema-cwb.svg" alt="Poiema CWB" width={116} height={24} className="h-[24px] w-auto" />
             <span className="border-l border-border-hairline pl-[14px] font-ui text-[11px] font-bold uppercase tracking-[var(--ls-eyebrow)] text-ink-4">
               Gallery
             </span>
