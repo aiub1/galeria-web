@@ -27,10 +27,20 @@ export function putBlob(
         onProgress(blob.size);
         resolve();
       } else {
-        reject(new PutError(`O armazenamento recusou o arquivo (HTTP ${xhr.status}).`, xhr.status));
+        reject(
+          new PutError(`O armazenamento recusou o arquivo (HTTP ${xhr.status}): ${xhr.responseText.slice(0, 200)}`, xhr.status),
+        );
       }
     };
-    xhr.onerror = () => reject(new PutError("Falha de rede ao enviar o arquivo.", null));
+    // Sem detalhe do navegador: um XHR bloqueado por CORS e um sem rede são
+    // indistinguíveis aqui. Por isso a mensagem cita o host e as duas causas.
+    xhr.onerror = () =>
+      reject(
+        new PutError(
+          `Falha de rede ao enviar para ${new URL(url).host} (CORS do bucket para ${location.origin} ou conexão).`,
+          null,
+        ),
+      );
     xhr.onabort = () => reject(new PutError("Envio cancelado.", null));
     xhr.send(blob);
   });

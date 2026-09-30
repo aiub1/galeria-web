@@ -46,7 +46,8 @@ export type Stage = "processing" | "uploading" | "confirming";
 
 export type JobOutcome =
   | { ok: true; indexing: Extract<ConfirmResult, { ok: true }>["indexing"] }
-  | { ok: false; error: string; resume?: ConfirmBody };
+  // `stage`: onde falhou (para diagnóstico); ausente se falhou antes de começar.
+  | { ok: false; error: string; resume?: ConfirmBody; stage?: Stage };
 
 export async function runPhotoJob(
   job: PhotoJob,
@@ -62,10 +63,15 @@ export async function runPhotoJob(
   // Fora do try: se o envio terminou e só a confirmação falhou (rede), o
   // retry reaproveita os arquivos já no R2 — a confirmação é idempotente.
   let body = job.resume;
+  let stage: Stage | undefined;
+  const enter = (next: Stage, progress?: number) => {
+    stage = next;
+    onStage(next, progress);
+  };
 
   try {
     if (!body) {
-      onStage("processing");
+      enter("processing");
       const processed = await deps.process(job.file);
       const sizes = {
         originalBytes: processed.blobs.original.size,
@@ -78,18 +84,18 @@ export async function runPhotoJob(
         sessionId: job.sessionId,
         photos: [{ clientId: job.clientId, ...sizes }],
       });
-      if (!prepared.ok) return { ok: false, error: prepared.error };
+      if (!prepared.ok) return { ok: false, error: prepared.error, stage };
       const photo = prepared.photos[0];
       if (!photo) return { ok: false, error: "Resposta inesperada do servidor." };
 
-      onStage("uploading", 0);
+      enter("uploading", 0);
       const total = UPLOAD_VARIANTS.reduce((sum, v) => sum + processed.blobs[v].size, 0);
       const loaded: Record<UploadVariant, number> = { original: 0, web: 0, thumb: 0 };
       await Promise.all(
         UPLOAD_VARIANTS.map((variant) =>
           deps.put(photo.uploads[variant].url, processed.blobs[variant], photo.uploads[variant].contentType, (n) => {
             loaded[variant] = n;
-            onStage("uploading", (loaded.original + loaded.web + loaded.thumb) / total);
+            enter("uploading", (loaded.original + loaded.web + loaded.thumb) / total);
           }),
         ),
       );
@@ -108,12 +114,12 @@ export async function runPhotoJob(
       };
     }
 
-    onStage("confirming");
+    enter("confirming");
     const confirmed = await deps.confirm(body);
-    if (!confirmed.ok) return { ok: false, error: confirmed.error, resume: body };
+    if (!confirmed.ok) return { ok: false, error: confirmed.error, resume: body, stage };
     return { ok: true, indexing: confirmed.indexing };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Falha inesperada.", resume: body };
+    return { ok: false, error: error instanceof Error ? error.message : "Falha inesperada.", resume: body, stage };
   }
 }
 

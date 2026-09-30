@@ -11,7 +11,7 @@ import type { EventOption, MinorOption } from "@/lib/upload/options";
 import { createSerialRunner, MAX_PARALLEL_PHOTOS, runPhotoJob, runPool, type ConfirmBody } from "@/lib/upload/pipeline";
 import { canEncodeWebp, makePreviewUrl, processImage, validateSourceFile } from "@/lib/upload/process-image";
 import { putBlob } from "@/lib/upload/put-blob";
-import { confirmUpload, createEvent, createSession, prepareUpload } from "./actions";
+import { confirmUpload, createEvent, createSession, prepareUpload, reportUploadError } from "./actions";
 import { LinkButton, NewItemForm } from "./NewItemForm";
 import { isBusy, isEditable, PhotoRow, type UploadItem } from "./PhotoRow";
 
@@ -179,7 +179,14 @@ export function UploadScreen({
         });
       } else {
         if (outcome.resume) resumes.current.set(id, outcome.resume);
-        dispatch({ type: "patch", id, patch: { stage: "error", error: outcome.error } });
+        const detail = outcome.stage ? `${outcome.error} [etapa: ${outcome.stage}]` : outcome.error;
+        dispatch({ type: "patch", id, patch: { stage: "error", error: detail } });
+        void reportUploadError({
+          stage: outcome.stage,
+          error: outcome.error,
+          origin: location.origin,
+          userAgent: navigator.userAgent,
+        }).catch(() => {});
       }
     },
     [event, sessionId],

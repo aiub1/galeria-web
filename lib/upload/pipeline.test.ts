@@ -80,7 +80,7 @@ describe("runPhotoJob", () => {
   it("falha do PUT não confirma nada", async () => {
     const d = deps({ put: vi.fn(async () => Promise.reject(new Error("HTTP 403"))) });
     const r = await runPhotoJob(job(), d, () => {});
-    expect(r).toEqual({ ok: false, error: "HTTP 403", resume: undefined });
+    expect(r).toEqual({ ok: false, error: "HTTP 403", resume: undefined, stage: "uploading" });
     expect(d.confirm).not.toHaveBeenCalled();
   });
 
