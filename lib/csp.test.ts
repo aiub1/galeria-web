@@ -13,22 +13,19 @@ describe("buildCsp", () => {
   const directive = (name: string) => csp.split("; ").find((d) => d.startsWith(`${name} `));
 
   it("script-src usa nonce e nunca unsafe-inline", () => {
-    expect(directive("script-src")).toBe("script-src 'self' 'nonce-abc123' 'strict-dynamic'");
+    expect(directive("script-src")).toBe("script-src 'self' 'nonce-abc123' 'strict-dynamic' 'wasm-unsafe-eval'");
     expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
     expect(directive("script-src")).not.toContain("unsafe-inline");
-    expect(directive("script-src")).not.toContain("unsafe-eval");
   });
 
-  it("wasm-unsafe-eval só quando pedido (tela de upload), sem liberar unsafe-eval", () => {
-    expect(directive("script-src")).not.toContain("wasm-unsafe-eval");
-    const withWasm = buildCsp({ ...base, allowWasm: true });
-    expect(withWasm).toContain("script-src 'self' 'nonce-abc123' 'strict-dynamic' 'wasm-unsafe-eval';");
-    expect(withWasm).not.toMatch(/'unsafe-eval'/);
+  it("wasm-unsafe-eval vale para todas as rotas (navegação client-side não troca a CSP), sem liberar unsafe-eval", () => {
+    expect(directive("script-src")).toContain("'wasm-unsafe-eval'");
+    expect(csp).not.toMatch(/'unsafe-eval'/);
   });
 
   it("unsafe-eval só em desenvolvimento", () => {
-    expect(directive("script-src")).not.toContain("unsafe-eval");
-    expect(buildCsp({ ...base, isDev: true })).toContain("'unsafe-eval'");
+    expect(directive("script-src")).not.toMatch(/'unsafe-eval'/);
+    expect(buildCsp({ ...base, isDev: true })).toMatch(/'unsafe-eval'/);
   });
 
   it("style-src usa nonce em produção e unsafe-inline só em desenvolvimento", () => {

@@ -1,7 +1,8 @@
 // Content-Security-Policy completa. Montada no `proxy.ts` a cada requisição
 // porque o nonce de `script-src` é por requisição (ADR 0003).
 //
-// - Scripts: só `'self'` + nonce + `'strict-dynamic'`. Sem `'unsafe-inline'`.
+// - Scripts: `'self'` + nonce + `'strict-dynamic'` + `'wasm-unsafe-eval'`. Sem
+//   `'unsafe-inline'` e sem `'unsafe-eval'` em produção.
 // - Estilos: nonce para <style>; atributos `style=""` liberados à parte em
 //   `style-src-attr` (nonce não cobre atributo, e o React emite alguns). Em
 //   desenvolvimento, `'unsafe-inline'` no lugar do nonce (o overlay do
@@ -14,22 +15,19 @@ export type CspInput = {
   isDev: boolean;
   supabaseUrl: string;
   r2ObjectHost: string;
-  /**
-   * Só a tela de upload: o encoder WebP em WASM (navegadores sem WebP no
-   * canvas, como o WebKit do iPhone) precisa de `'wasm-unsafe-eval'`. Ele só
-   * libera compilar WASM, não `eval` de texto. As demais rotas não o recebem.
-   */
-  allowWasm?: boolean;
 };
 
-export function buildCsp({ nonce, isDev, supabaseUrl, r2ObjectHost, allowWasm = false }: CspInput): string {
+export function buildCsp({ nonce, isDev, supabaseUrl, r2ObjectHost }: CspInput): string {
   const supabase = new URL(supabaseUrl);
   const supabaseWs = `${supabase.protocol === "https:" ? "wss:" : "ws:"}//${supabase.host}`;
 
   const directives = [
     `default-src 'self'`,
     // React usa eval em desenvolvimento (stacks de erro); em produção não.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${allowWasm ? " 'wasm-unsafe-eval'" : ""}${isDev ? " 'unsafe-eval'" : ""}`,
+    // 'wasm-unsafe-eval' só permite compilar WASM (encoder WebP do upload), não
+    // eval de texto. É global: ver ADR 0004 (a CSP do documento não muda numa
+    // navegação client-side, então liberar só em /enviar não funciona).
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     `style-src-attr 'unsafe-inline'`,
     `img-src 'self' data: blob: https://${r2ObjectHost}`,

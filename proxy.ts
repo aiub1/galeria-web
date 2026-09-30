@@ -29,8 +29,6 @@ export async function proxy(request: NextRequest) {
     isDev: process.env.NODE_ENV === "development",
     supabaseUrl: publicEnv.NEXT_PUBLIC_SUPABASE_URL,
     r2ObjectHost: r2ObjectHost(process.env.R2_ACCOUNT_ID ?? "", process.env.R2_BUCKET ?? ""),
-    // Encoder WebP em WASM só na tela de upload (docs/adr/0004).
-    allowWasm: request.nextUrl.pathname === "/enviar",
   });
   request.headers.set("x-nonce", nonce);
   request.headers.set("content-security-policy", csp);
