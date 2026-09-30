@@ -6,7 +6,8 @@
 //   `style-src-attr` (nonce não cobre atributo, e o React emite alguns). Em
 //   desenvolvimento, `'unsafe-inline'` no lugar do nonce (o overlay do
 //   `next dev` injeta <style> sem nonce; nonce presente anula 'unsafe-inline').
-// - `img-src` inclui o host exato do bucket R2 (fotos por URL assinada).
+// - `img-src` e `connect-src` incluem o host exato do bucket R2 (leitura por URL
+//   assinada e PUT do upload direto do navegador).
 
 export type CspInput = {
   nonce: string;
@@ -27,7 +28,8 @@ export function buildCsp({ nonce, isDev, supabaseUrl, r2ObjectHost }: CspInput):
     `style-src-attr 'unsafe-inline'`,
     `img-src 'self' data: blob: https://${r2ObjectHost}`,
     `font-src 'self'`,
-    `connect-src 'self' ${supabase.origin} ${supabaseWs}`,
+    // O host do bucket também vale aqui: o PUT do upload (XMLHttpRequest) é connect-src.
+    `connect-src 'self' ${supabase.origin} ${supabaseWs} https://${r2ObjectHost}`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,

@@ -35,13 +35,15 @@ describe("buildCsp", () => {
     expect(directive("img-src")).toBe("img-src 'self' data: blob: https://bucket.acct.r2.cloudflarestorage.com");
   });
 
-  it("connect-src cobre Supabase (https e wss)", () => {
-    expect(directive("connect-src")).toBe("connect-src 'self' https://proj.supabase.co wss://proj.supabase.co");
+  it("connect-src cobre Supabase (https e wss) e o mesmo host exato do bucket (PUT do upload)", () => {
+    expect(directive("connect-src")).toBe(
+      "connect-src 'self' https://proj.supabase.co wss://proj.supabase.co https://bucket.acct.r2.cloudflarestorage.com",
+    );
   });
 
   it("Supabase local em http usa ws", () => {
     const local = buildCsp({ ...base, supabaseUrl: "http://127.0.0.1:54321" });
-    expect(local).toContain("connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321");
+    expect(local).toContain("connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321 https://bucket.acct");
   });
 
   it("fecha o resto", () => {
